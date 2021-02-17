@@ -28,7 +28,6 @@
 
 import("//build/compiled_action.gni")
 import("//build/test.gni")
-import("//build/test/test_package.gni")
 import("//third_party/protobuf/proto_library.gni")
 
 config("protobuf_config") {
@@ -537,12 +536,16 @@ test("custom_options_test") {
   ]
 }
 
-test_package("protobuf_tests") {
-  deps = [ ":custom_options_test" ]
-  tests = [
-    {
-      name = "custom_options_test"
-      environments = basic_envs
-    },
-  ]
+if (is_fuchsia_tree) {
+  import("//build/test/test_package.gni")
+
+  test_package("protobuf_tests") {
+    deps = [ ":custom_options_test" ]
+    tests = [
+      {
+        name = "custom_options_test"
+        environments = basic_envs
+      },
+    ]
+  }
 }
