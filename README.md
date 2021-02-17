@@ -7,15 +7,11 @@ repository because it needs to be shared by
 [Fuchsia](https://fuchsia.googlesource.com/fuchsia/) and
 [Cobalt](https://fuchsia.googlesource.com/cobalt/).
 
-This repo should be checked out in secondary build directory that corresponds to
-the location of the protobuf repo. See the
+This repo should be checked out such that:
+
+* It is in `//build/secondary/third_party/protobuf`.
+* Protobuf is in `//third_party/protobuf`.
+* `//.gn` contains `secondary_source = "//build/secondary/"`
+
+See the
 [GN documentation on secondary_source](https://gn.googlesource.com/gn/+/master/docs/reference.md#other-help-topics-gn-file-variables).
-
-For example if `//.gn` contains:
-
-```gn
-secondary_source = "//build/secondary/"
-```
-
-And protobuf is checked out at `//third_party/protobuf`, then this repo should
-be checked out at `//build/secondary/third_party/protobuf`.

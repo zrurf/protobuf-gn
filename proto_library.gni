@@ -240,7 +240,7 @@ template("proto_library") {
   action(action_name) {
     visibility = []
     visibility = [ ":*" ]
-    script = "//third_party/protobuf/protoc_wrapper.py"
+    script = "//build/secondary/third_party/protobuf/protoc_wrapper.py"
     sources = proto_sources
     outputs = get_path_info(protogens, "abspath")
     args = protos
