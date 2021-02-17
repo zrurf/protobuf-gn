@@ -1,0 +1,26 @@
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+import("//third_party/protobuf/proto_library.gni")
+
+proto_library("custom_options_proto") {
+  sources = [ "custom_options.proto" ]
+  use_protobuf_full = true
+}
+
+test("custom_options_test") {
+  sources = [ "custom_options.cc" ]
+  deps = [
+    ":custom_options_proto",
+    "//third_party/googletest:gtest_main",
+  ]
+}
+
+test_package("protobuf_tests") {
+  deps = [ ":custom_options_test" ]
+  tests = [
+    {
+      name = "custom_options_test"
+      environments = basic_envs
+    },
+  ]
+}
