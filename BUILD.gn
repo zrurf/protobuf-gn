@@ -478,15 +478,9 @@ test("custom_options_test") {
 }
 
 if (is_fuchsia_tree) {
-  import("//build/test/test_package.gni")
+  import("//src/sys/build/components.gni")
 
-  test_package("protobuf_tests") {
+  fuchsia_unittest_package("protobuf_tests") {
     deps = [ ":custom_options_test" ]
-    tests = [
-      {
-        name = "custom_options_test"
-        environments = basic_envs
-      },
-    ]
   }
 }
