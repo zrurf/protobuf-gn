@@ -31,11 +31,6 @@
 #   generate_go (optional, default false)
 #       Generate Go protobuf stubs.
 #
-#   use_golang_protobuf_v2 (optional, default false)
-#       Use google.golang.org/protobuf/cmd/protoc-gen-go instead of
-#       github.com/golang/protobuf/protoc-gen-go to generate Go protobuf. Does
-#       nothing unless generate_go is true.
-#
 #   cc_generator_options (optional)
 #       List of extra flags passed to the protocol compiler.  If you need to
 #       add an EXPORT macro to a protobuf's C++ header, set the
@@ -129,14 +124,6 @@ template("proto_library") {
     generate_go = invoker.generate_go
   } else {
     generate_go = false
-  }
-  if (defined(invoker.use_golang_protobuf_v2)) {
-    use_golang_protobuf_v2 = invoker.use_golang_protobuf_v2
-  } else {
-    use_golang_protobuf_v2 = false
-  }
-  if (!generate_go) {
-    not_needed([ "use_golang_protobuf_v2" ])
   }
   if (defined(invoker.generator_plugin_label)) {
     # Straightforward way to get the name of executable doesn't work because
@@ -256,10 +243,7 @@ template("proto_library") {
     protoc_path = get_label_info(protoc_label, "root_out_dir") + "/protoc"
 
     if (generate_go) {
-      protoc_gen_go_label = "//third_party/golibs/github.com/golang/protobuf/protoc-gen-go($host_toolchain)"
-      if (use_golang_protobuf_v2) {
-        protoc_gen_go_label = "//third_party/golibs/google.golang.org/protobuf/cmd/protoc-gen-go($host_toolchain)"
-      }
+      protoc_gen_go_label = "//third_party/golibs/google.golang.org/protobuf/cmd/protoc-gen-go($host_toolchain)"
       protoc_gen_go_path =
           get_label_info(protoc_gen_go_label, "root_out_dir") + "/protoc-gen-go"
     }
