@@ -478,7 +478,7 @@ test("custom_options_test") {
 }
 
 if (is_fuchsia_tree) {
-  import("//src/sys/build/components.gni")
+  import("//build/components.gni")
 
   fuchsia_unittest_package("protobuf_tests") {
     deps = [ ":custom_options_test" ]
