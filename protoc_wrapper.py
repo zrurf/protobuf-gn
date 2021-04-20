@@ -65,6 +65,15 @@ def WriteIncludes(headers, include):
         print(line, file=f)
 
 
+def WritePluginDepfile(depfile, outputs, dependencies):
+  with open(outputs) as f:
+    outs = " ".join(line.strip() for line in f)
+  with open(dependencies) as f:
+    deps = " ".join(line.strip() for line in f)
+  with open(depfile, 'w') as f:
+    print("{0}: {1}".format(outs, deps), file=f)
+
+
 def main(argv):
   parser = argparse.ArgumentParser()
   parser.add_argument("--protoc",
@@ -81,6 +90,12 @@ def main(argv):
 
   parser.add_argument("--plugin",
                       help="Relative path to custom generator plugin.")
+  parser.add_argument("--plugin-depfile",
+                      help="Output location for the plugin depfile.")
+  parser.add_argument("--plugin-depfile-deps",
+                      help="File containing plugin deps not set as other input.")
+  parser.add_argument("--plugin-depfile-outputs",
+                      help="File containing a list of files that will be generated.")
   parser.add_argument("--plugin-options",
                       help="Custom generator plugin options.")
   parser.add_argument("--cc-options",
@@ -125,6 +140,15 @@ def main(argv):
       "--plugin", "protoc-gen-plugin=" + os.path.relpath(options.plugin),
       "--plugin_out", plugin_options + options.plugin_out_dir
     ]
+
+  if options.plugin_depfile:
+    if not options.plugin_depfile_deps or not options.plugin_depfile_outputs:
+      raise RuntimeError("If plugin depfile is supplied, then the plugin "
+                         "depfile deps and outputs must be set.")
+    depfile = options.plugin_depfile
+    dep_info = options.plugin_depfile_deps
+    outputs = options.plugin_depfile_outputs
+    WritePluginDepfile(depfile, outputs, dep_info)
 
   protoc_cmd += ["--proto_path", proto_dir]
   for path in options.import_dir:
