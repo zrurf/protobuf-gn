@@ -11,7 +11,9 @@ Features:
 
 from __future__ import print_function
 import argparse
+import os
 import os.path
+import re
 import subprocess
 import sys
 import tempfile
@@ -65,13 +67,47 @@ def WriteIncludes(headers, include):
         print(line, file=f)
 
 
+def WriteDepfile(depfile, out_list, dep_list):
+  os.makedirs(os.path.dirname(depfile), exist_ok=True)
+  with open(depfile, 'w') as f:
+    print("{0}: {1}".format(" ".join(out_list), " ".join(dep_list)), file=f)
+
+
 def WritePluginDepfile(depfile, outputs, dependencies):
   with open(outputs) as f:
-    outs = " ".join(line.strip() for line in f)
+    outs = [line.strip() for line in f]
   with open(dependencies) as f:
-    deps = " ".join(line.strip() for line in f)
-  with open(depfile, 'w') as f:
-    print("{0}: {1}".format(outs, deps), file=f)
+    deps = [line.strip() for line in f]
+  WriteDepfile(depfile, outs, deps)
+
+
+def WriteProtocDepfile(depfile, outputs, deps_list):
+  with open(outputs) as f:
+    outs = [line.strip() for line in f]
+  WriteDepfile(depfile, outs, deps_list)
+
+
+def ExtractImports(proto, proto_dir, import_dirs):
+  filename = os.path.join(proto_dir, proto)
+  imports = set()
+
+  with open(filename) as f:
+    # Search the file for import.
+    for line in f:
+      match = re.match(r'^\s*import(?:\s+public)?\s+"([^"]+)"\s*;\s*$', line)
+      if match:
+        imported = match[1]
+
+        # Check import directories to find the imported file.
+        for candidate_dir in [proto_dir] + import_dirs:
+          candidate_path = os.path.join(candidate_dir, imported)
+          if os.path.exists(candidate_path):
+            imports.add(candidate_path)
+            # Transitively check imports.
+            imports.update(ExtractImports(imported, candidate_dir, import_dirs))
+            break
+
+  return imports
 
 
 def main(argv):
@@ -87,6 +123,11 @@ def main(argv):
                       help="Output directory for standard Python generator.")
   parser.add_argument("--plugin-out-dir",
                       help="Output directory for custom generator plugin.")
+
+  parser.add_argument("--depfile",
+                      help="Output location for the protoc depfile.")
+  parser.add_argument("--depfile-outputs",
+                      help="File containing a list of files to be generated.")
 
   parser.add_argument("--plugin",
                       help="Relative path to custom generator plugin.")
@@ -149,6 +190,19 @@ def main(argv):
     dep_info = options.plugin_depfile_deps
     outputs = options.plugin_depfile_outputs
     WritePluginDepfile(depfile, outputs, dep_info)
+
+  if options.depfile:
+    if not options.depfile_outputs:
+      raise RuntimeError("If depfile is supplied, depfile outputs must also"
+                         "be supplied.")
+
+    depfile = options.depfile
+    outputs = options.depfile_outputs
+    deps = set()
+
+    for proto in protos:
+      deps.update(ExtractImports(proto, proto_dir, options.import_dir))
+    WriteProtocDepfile(depfile, outputs, deps)
 
   protoc_cmd += ["--proto_path", proto_dir]
   for path in options.import_dir:

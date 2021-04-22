@@ -227,16 +227,21 @@ template("proto_library") {
     }
   }
 
+  generated_file("${target_name}_protoc_outputs") {
+    contents = rebase_path(protogens, root_build_dir)
+    outputs = [ "${target_gen_dir}/${target_name}.protoc_output_info" ]
+  }
+  protoc_output_info_target = ":${target_name}_protoc_outputs"
+
   action_name = "${target_name}_gen"
 
   # Generate protobuf stubs.
   action(action_name) {
     visibility = []
     visibility = [ ":*" ]
-    hermetic_deps = false
     script = "//build/secondary/third_party/protobuf/protoc_wrapper.py"
     sources = proto_sources
-    outputs = get_path_info(protogens, "abspath")
+    outputs = protogens
     args = protos
 
     protoc_label = "//third_party/protobuf:protoc($host_toolchain)"
@@ -247,6 +252,17 @@ template("proto_library") {
       protoc_gen_go_path =
           get_label_info(protoc_gen_go_label, "root_out_dir") + "/protoc-gen-go"
     }
+
+    # Depfile information.
+    depfile = "${target_gen_dir}/${target_name}.d"
+    protoc_output_info_files = get_target_outputs(protoc_output_info_target)
+    protoc_output_info_file = protoc_output_info_files[0]
+    args += [
+      "--depfile",
+      rebase_path(depfile, root_build_dir),
+      "--depfile-outputs",
+      rebase_path(protoc_output_info_file, root_build_dir),
+    ]
 
     args += [
       # Wrapper should never pick a system protoc.
@@ -331,8 +347,14 @@ template("proto_library") {
     }
 
     # System protoc is not used so it's necessary to build one.
-    inputs = [ protoc_path ]
-    deps = [ protoc_label ]
+    inputs = [
+      protoc_path,
+      protoc_output_info_file,
+    ]
+    deps = [
+      protoc_label,
+      protoc_output_info_target,
+    ]
 
     if (generate_go) {
       deps += [ protoc_gen_go_label ]
