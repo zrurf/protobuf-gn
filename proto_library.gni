@@ -30,6 +30,11 @@
 #
 #   generate_go (optional, default false)
 #       Generate Go protobuf stubs.
+#       Mutually exclusive with generate_go_grpc.
+#
+#   generate_go_grpc (optional, default false)
+#       Generate a Go gRPC protobuf stub, instead of a regular one.
+#       Mutually exclusive with generate_go.
 #
 #   cc_generator_options (optional)
 #       List of extra flags passed to the protocol compiler.  If you need to
@@ -120,11 +125,13 @@ template("proto_library") {
     generate_descriptor_set = false
   }
 
-  if (defined(invoker.generate_go)) {
-    generate_go = invoker.generate_go
-  } else {
-    generate_go = false
-  }
+  generate_go = defined(invoker.generate_go) && invoker.generate_go
+  generate_go_grpc =
+      defined(invoker.generate_go_grpc) && invoker.generate_go_grpc
+
+  assert(!generate_go || !generate_go_grpc,
+         "Only one of generate_go or generate_go_grpc can be enabled!")
+
   if (defined(invoker.generator_plugin_label)) {
     # Straightforward way to get the name of executable doesn't work because
     # |root_out_dir| and |root_build_dir| may differ in cross-compilation and
@@ -188,7 +195,7 @@ template("proto_library") {
     py_out_dir = "$root_out_dir/pyproto/" + proto_out_dir
     rel_py_out_dir = rebase_path(py_out_dir, root_build_dir)
   }
-  if (generate_go) {
+  if (generate_go || generate_go_grpc) {
     go_out_dir = "$root_gen_dir/go-proto-gen/src/" + proto_out_dir
     rel_go_out_dir = rebase_path(go_out_dir, root_build_dir)
   }
@@ -220,6 +227,9 @@ template("proto_library") {
     if (generate_go) {
       protogens += [ "$go_out_dir/${proto_path}.pb.go" ]
     }
+    if (generate_go_grpc) {
+      protogens += [ "$go_out_dir/${proto_path}_grpc.pb.go" ]
+    }
     if (generate_with_plugin) {
       foreach(suffix, generator_plugin_suffixes) {
         protogens += [ "$cc_out_dir/${proto_path}${suffix}" ]
@@ -247,10 +257,14 @@ template("proto_library") {
     protoc_label = "//third_party/protobuf:protoc($host_toolchain)"
     protoc_path = get_label_info(protoc_label, "root_out_dir") + "/protoc"
 
-    if (generate_go) {
-      protoc_gen_go_label = "//third_party/golibs/google.golang.org/protobuf/cmd/protoc-gen-go($host_toolchain)"
-      protoc_gen_go_path =
-          get_label_info(protoc_gen_go_label, "root_out_dir") + "/protoc-gen-go"
+    if (generate_go || generate_go_grpc) {
+      if (generate_go_grpc) {
+        protoc_gen_go_label = "//third_party/golibs/google.golang.org/grpc/cmd/protoc-gen-go-grpc($host_toolchain)"
+      } else {
+        protoc_gen_go_label = "//third_party/golibs/google.golang.org/protobuf/cmd/protoc-gen-go($host_toolchain)"
+      }
+      protoc_gen_go_path = get_label_info(protoc_gen_go_label, "root_out_dir") +
+                           "/" + get_label_info(protoc_gen_go_label, "name")
     }
 
     # Depfile information.
@@ -307,7 +321,7 @@ template("proto_library") {
       ]
     }
 
-    if (generate_go) {
+    if (generate_go || generate_go_grpc) {
       args += [
         "--plugin",
         rebase_path(protoc_gen_go_path, root_build_dir),
@@ -356,7 +370,7 @@ template("proto_library") {
       protoc_output_info_target,
     ]
 
-    if (generate_go) {
+    if (generate_go || generate_go_grpc) {
       deps += [ protoc_gen_go_label ]
       inputs += [ protoc_gen_go_path ]
     }
