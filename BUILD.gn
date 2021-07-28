@@ -41,14 +41,29 @@ config("protobuf_config") {
 config("protobuf_warnings") {
   cflags = []
 
-  # TODO(fxbug.dev/70570): These may not all be needed in the latest release
-  # of protobuf.
   if (is_clang) {
+    # These are all needed as of v3.17.3.
     cflags += [
       "-Wno-conversion",
       "-Wno-inconsistent-missing-override",
+      "-Wno-missing-field-initializers",
       "-Wno-sign-compare",
       "-Wno-unused-function",
+      "-Wno-unused-private-field",
+
+      # REMOVE THIS AFTER NEXT RELEASE.
+      #
+      # ../../third_party/protobuf/src/google/protobuf/descriptor.cc:1024:9: error: passing variable 'unknown_enum_values_by_number_' by reference requires holding mutex 'unknown_enum_values_mu_' [-Werror,-Wthread-safety-reference]
+      #        unknown_enum_values_by_number_, std::make_pair(parent, number));
+      #        ^
+      # ../../third_party/protobuf/src/google/protobuf/descriptor.cc:1034:9: error: passing variable 'unknown_enum_values_by_number_' by reference requires holding mutex 'unknown_enum_values_mu_' [-Werror,-Wthread-safety-reference]
+      #        unknown_enum_values_by_number_, std::make_pair(parent, number));
+      #        ^
+      # 2 errors generated.
+      #
+      # This was fixed in https://github.com/protocolbuffers/protobuf/commit/9223147 by adding the
+      # missing capability annotations.
+      "-Wno-thread-safety-reference",
     ]
   }
 }
@@ -67,9 +82,12 @@ protobuf_lite_sources = [
   "src/google/protobuf/any_lite.cc",
   "src/google/protobuf/arena.cc",
   "src/google/protobuf/arena.h",
+  "src/google/protobuf/arenastring.cc",
   "src/google/protobuf/arenastring.h",
   "src/google/protobuf/extension_set.cc",
   "src/google/protobuf/extension_set.h",
+  "src/google/protobuf/field_access_listener.cc",
+  "src/google/protobuf/field_access_listener.h",
   "src/google/protobuf/generated_message_util.cc",
   "src/google/protobuf/generated_message_util.h",
   "src/google/protobuf/implicit_weak_message.cc",
@@ -83,12 +101,15 @@ protobuf_lite_sources = [
   "src/google/protobuf/io/zero_copy_stream.h",
   "src/google/protobuf/io/zero_copy_stream_impl_lite.cc",
   "src/google/protobuf/io/zero_copy_stream_impl_lite.h",
+  "src/google/protobuf/map.cc",
   "src/google/protobuf/map.h",
   "src/google/protobuf/map_entry_lite.h",
   "src/google/protobuf/map_field_lite.h",
   "src/google/protobuf/map_type_handler.h",
   "src/google/protobuf/message_lite.cc",
   "src/google/protobuf/message_lite.h",
+  "src/google/protobuf/parse_context.cc",
+  "src/google/protobuf/parse_context.h",
   "src/google/protobuf/repeated_field.cc",
   "src/google/protobuf/repeated_field.h",
   "src/google/protobuf/stubs/atomic_sequence_num.h",
@@ -109,7 +130,6 @@ protobuf_lite_sources = [
   "src/google/protobuf/stubs/casts.h",
   "src/google/protobuf/stubs/common.cc",
   "src/google/protobuf/stubs/common.h",
-  "src/google/protobuf/stubs/fastmem.h",
   "src/google/protobuf/stubs/hash.h",
   "src/google/protobuf/stubs/int128.cc",
   "src/google/protobuf/stubs/int128.h",
@@ -213,8 +233,6 @@ static_library("protobuf_full") {
               "src/google/protobuf/source_context.pb.h",
               "src/google/protobuf/struct.pb.cc",
               "src/google/protobuf/struct.pb.h",
-              "src/google/protobuf/stubs/mathlimits.cc",
-              "src/google/protobuf/stubs/mathlimits.h",
               "src/google/protobuf/stubs/mathutil.h",
               "src/google/protobuf/stubs/singleton.h",
               "src/google/protobuf/stubs/substitute.cc",
@@ -315,8 +333,11 @@ if (current_toolchain == host_toolchain) {
       "src/google/protobuf/compiler/cpp/cpp_message.h",
       "src/google/protobuf/compiler/cpp/cpp_message_field.cc",
       "src/google/protobuf/compiler/cpp/cpp_message_field.h",
+      "src/google/protobuf/compiler/cpp/cpp_names.h",
       "src/google/protobuf/compiler/cpp/cpp_padding_optimizer.cc",
       "src/google/protobuf/compiler/cpp/cpp_padding_optimizer.h",
+      "src/google/protobuf/compiler/cpp/cpp_parse_function_generator.cc",
+      "src/google/protobuf/compiler/cpp/cpp_parse_function_generator.h",
       "src/google/protobuf/compiler/cpp/cpp_primitive_field.cc",
       "src/google/protobuf/compiler/cpp/cpp_primitive_field.h",
       "src/google/protobuf/compiler/cpp/cpp_service.cc",
@@ -382,6 +403,8 @@ if (current_toolchain == host_toolchain) {
       "src/google/protobuf/compiler/java/java_generator_factory.h",
       "src/google/protobuf/compiler/java/java_helpers.cc",
       "src/google/protobuf/compiler/java/java_helpers.h",
+      "src/google/protobuf/compiler/java/java_kotlin_generator.cc",
+      "src/google/protobuf/compiler/java/java_kotlin_generator.h",
       "src/google/protobuf/compiler/java/java_map_field.cc",
       "src/google/protobuf/compiler/java/java_map_field.h",
       "src/google/protobuf/compiler/java/java_map_field_lite.cc",
