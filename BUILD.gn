@@ -33,7 +33,6 @@ config("protobuf_config") {
   include_dirs = [ "src" ]
   defines = [
     "GOOGLE_PROTOBUF_NO_RTTI",
-    "GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER",
     "HAVE_PTHREAD",
   ]
 }
@@ -41,17 +40,16 @@ config("protobuf_warnings") {
   cflags = []
 
   if (is_clang) {
-    # These are all needed as of v3.13.0.1.
+    # These are all needed as of https://github.com/protocolbuffers/protobuf/commit/66d7491.
     cflags += [
-      "-Wno-deprecated-declarations",
       "-Wno-float-conversion",
       "-Wno-implicit-float-conversion",
       "-Wno-implicit-int-conversion",
+      "-Wno-implicit-int-float-conversion",
+      # TODO(https://github.com/protocolbuffers/protobuf/pull/8859): Remove this.
       "-Wno-missing-field-initializers",
       "-Wno-shorten-64-to-32",
       "-Wno-sign-compare",
-      "-Wno-unneeded-internal-declaration",
-      "-Wno-unused-private-field",
     ]
   }
 }
@@ -69,6 +67,7 @@ static_library("protobuf_lite") {
   sources = [
     "src/google/protobuf/any_lite.cc",
     "src/google/protobuf/arena.cc",
+    "src/google/protobuf/arenastring.cc",
     "src/google/protobuf/extension_set.cc",
     "src/google/protobuf/generated_enum_util.cc",
     "src/google/protobuf/generated_message_table_driven_lite.cc",
@@ -80,6 +79,7 @@ static_library("protobuf_lite") {
     "src/google/protobuf/io/zero_copy_stream.cc",
     "src/google/protobuf/io/zero_copy_stream_impl.cc",
     "src/google/protobuf/io/zero_copy_stream_impl_lite.cc",
+    "src/google/protobuf/map.cc",
     "src/google/protobuf/message_lite.cc",
     "src/google/protobuf/parse_context.cc",
     "src/google/protobuf/repeated_field.cc",
@@ -113,16 +113,18 @@ static_library("protobuf_lite") {
     "src/google/protobuf/empty.pb.h",
     "src/google/protobuf/extension_set.h",
     "src/google/protobuf/extension_set_inl.h",
+    "src/google/protobuf/field_access_listener.h",
     "src/google/protobuf/field_mask.pb.h",
     "src/google/protobuf/generated_enum_reflection.h",
     "src/google/protobuf/generated_enum_util.h",
     "src/google/protobuf/generated_message_reflection.h",
     "src/google/protobuf/generated_message_table_driven.h",
     "src/google/protobuf/generated_message_table_driven_lite.h",
+    "src/google/protobuf/generated_message_tctable_decl.h",
+    "src/google/protobuf/generated_message_tctable_impl.h",
     "src/google/protobuf/generated_message_util.h",
     "src/google/protobuf/has_bits.h",
     "src/google/protobuf/implicit_weak_message.h",
-    "src/google/protobuf/inlined_string_field.h",
     "src/google/protobuf/io/coded_stream.h",
     "src/google/protobuf/io/gzip_stream.h",
     "src/google/protobuf/io/io_win32.h",
@@ -161,7 +163,6 @@ static_library("protobuf_lite") {
     "src/google/protobuf/stubs/callback.h",
     "src/google/protobuf/stubs/casts.h",
     "src/google/protobuf/stubs/common.h",
-    "src/google/protobuf/stubs/fastmem.h",
     "src/google/protobuf/stubs/hash.h",
     "src/google/protobuf/stubs/int128.h",
     "src/google/protobuf/stubs/logging.h",
@@ -214,6 +215,7 @@ static_library("protobuf_full") {
     "src/google/protobuf/dynamic_message.cc",
     "src/google/protobuf/empty.pb.cc",
     "src/google/protobuf/extension_set_heavy.cc",
+    "src/google/protobuf/field_access_listener.cc",
     "src/google/protobuf/field_mask.pb.cc",
     "src/google/protobuf/generated_message_reflection.cc",
     "src/google/protobuf/generated_message_table_driven.cc",
@@ -278,16 +280,18 @@ static_library("protobuf_full") {
     "src/google/protobuf/empty.pb.h",
     "src/google/protobuf/extension_set.h",
     "src/google/protobuf/extension_set_inl.h",
+    "src/google/protobuf/field_access_listener.h",
     "src/google/protobuf/field_mask.pb.h",
     "src/google/protobuf/generated_enum_reflection.h",
     "src/google/protobuf/generated_enum_util.h",
     "src/google/protobuf/generated_message_reflection.h",
     "src/google/protobuf/generated_message_table_driven.h",
     "src/google/protobuf/generated_message_table_driven_lite.h",
+    "src/google/protobuf/generated_message_tctable_decl.h",
+    "src/google/protobuf/generated_message_tctable_impl.h",
     "src/google/protobuf/generated_message_util.h",
     "src/google/protobuf/has_bits.h",
     "src/google/protobuf/implicit_weak_message.h",
-    "src/google/protobuf/inlined_string_field.h",
     "src/google/protobuf/io/coded_stream.h",
     "src/google/protobuf/io/gzip_stream.h",
     "src/google/protobuf/io/io_win32.h",
@@ -326,7 +330,6 @@ static_library("protobuf_full") {
     "src/google/protobuf/stubs/callback.h",
     "src/google/protobuf/stubs/casts.h",
     "src/google/protobuf/stubs/common.h",
-    "src/google/protobuf/stubs/fastmem.h",
     "src/google/protobuf/stubs/hash.h",
     "src/google/protobuf/stubs/int128.h",
     "src/google/protobuf/stubs/logging.h",
@@ -413,6 +416,7 @@ if (current_toolchain == host_toolchain) {
       "src/google/protobuf/compiler/cpp/cpp_message.cc",
       "src/google/protobuf/compiler/cpp/cpp_message_field.cc",
       "src/google/protobuf/compiler/cpp/cpp_padding_optimizer.cc",
+      "src/google/protobuf/compiler/cpp/cpp_parse_function_generator.cc",
       "src/google/protobuf/compiler/cpp/cpp_primitive_field.cc",
       "src/google/protobuf/compiler/cpp/cpp_service.cc",
       "src/google/protobuf/compiler/cpp/cpp_string_field.cc",
@@ -445,6 +449,7 @@ if (current_toolchain == host_toolchain) {
       "src/google/protobuf/compiler/java/java_generator.cc",
       "src/google/protobuf/compiler/java/java_generator_factory.cc",
       "src/google/protobuf/compiler/java/java_helpers.cc",
+      "src/google/protobuf/compiler/java/java_kotlin_generator.cc",
       "src/google/protobuf/compiler/java/java_map_field.cc",
       "src/google/protobuf/compiler/java/java_map_field_lite.cc",
       "src/google/protobuf/compiler/java/java_message.cc",
