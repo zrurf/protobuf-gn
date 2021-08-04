@@ -46,8 +46,6 @@ config("protobuf_warnings") {
       "-Wno-implicit-float-conversion",
       "-Wno-implicit-int-conversion",
       "-Wno-implicit-int-float-conversion",
-      # TODO(https://github.com/protocolbuffers/protobuf/pull/8859): Remove this.
-      "-Wno-missing-field-initializers",
       "-Wno-shorten-64-to-32",
       "-Wno-sign-compare",
     ]
