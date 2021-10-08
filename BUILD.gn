@@ -71,6 +71,7 @@ static_library("protobuf_lite") {
     "src/google/protobuf/generated_message_table_driven_lite.cc",
     "src/google/protobuf/generated_message_util.cc",
     "src/google/protobuf/implicit_weak_message.cc",
+    "src/google/protobuf/inlined_string_field.cc",
     "src/google/protobuf/io/coded_stream.cc",
     "src/google/protobuf/io/io_win32.cc",
     "src/google/protobuf/io/strtod.cc",
@@ -213,8 +214,8 @@ static_library("protobuf_full") {
     "src/google/protobuf/dynamic_message.cc",
     "src/google/protobuf/empty.pb.cc",
     "src/google/protobuf/extension_set_heavy.cc",
-    "src/google/protobuf/field_access_listener.cc",
     "src/google/protobuf/field_mask.pb.cc",
+    "src/google/protobuf/generated_message_bases.cc",
     "src/google/protobuf/generated_message_reflection.cc",
     "src/google/protobuf/generated_message_table_driven.cc",
 
