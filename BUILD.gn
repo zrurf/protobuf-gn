@@ -42,6 +42,7 @@ config("protobuf_warnings") {
   if (is_clang) {
     # These are all needed as of https://github.com/protocolbuffers/protobuf/commit/66d7491.
     cflags += [
+      "-Wno-extra-semi",
       "-Wno-float-conversion",
       "-Wno-implicit-float-conversion",
       "-Wno-implicit-int-conversion",
