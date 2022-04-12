@@ -26,7 +26,13 @@
 #       Generate C++ protobuf stubs.
 #
 #   generate_descriptor_set (optional, default false)
-#       Generate a descriptor set file.
+#       Generate a descriptor set file at a default location
+#       "${target_out_dir}/${target_name}.desc.pb".
+#
+#   generate_descriptor (optional, default "")
+#       Generate a descriptor set file at a specific location rooted underneath
+#       the generated files directory.
+#       Cannot be used in combination with |generate_descriptor|.
 #
 #   generate_go (optional, default false)
 #       Generate Go protobuf stubs.
@@ -119,18 +125,14 @@ template("proto_library") {
     generate_python = true
   }
 
-  if (defined(invoker.generate_descriptor_set)) {
-    generate_descriptor_set = invoker.generate_descriptor_set
-  } else {
-    generate_descriptor_set = false
-  }
-
   generate_go = defined(invoker.generate_go) && invoker.generate_go
   generate_go_grpc =
       defined(invoker.generate_go_grpc) && invoker.generate_go_grpc
 
   assert(!generate_go || !generate_go_grpc,
          "Only one of generate_go or generate_go_grpc can be enabled!")
+
+  not_needed(invoker, ["propagate_imports_configs"])
 
   if (defined(invoker.generator_plugin_label)) {
     # Straightforward way to get the name of executable doesn't work because
@@ -202,11 +204,20 @@ template("proto_library") {
 
   protos = rebase_path(invoker.sources, proto_in_dir)
   protogens = []
-  if (generate_descriptor_set) {
-    descriptor_set_out_out = "${target_out_dir}/${target_name}.desc.pb"
-    rel_descriptor_set_out_out =
-        rebase_path(descriptor_set_out_out, root_build_dir)
-    protogens += [ descriptor_set_out_out ]
+
+  descriptor_set_path_ = ""
+  if (defined(invoker.generate_descriptor_set) &&
+      invoker.generate_descriptor_set) {
+    assert(!defined(invoker.generate_descriptor))
+    descriptor_set_path_ = "${target_out_dir}/${target_name}.desc.pb"
+  } else if (defined(invoker.generate_descriptor)) {
+    descriptor_set_path_ =
+        "$root_gen_dir/" + 
+        rebase_path(proto_out_dir, "//") +
+        invoker.generate_descriptor
+  }
+  if (descriptor_set_path_ != "") {
+    protogens += [ descriptor_set_path_ ]
   }
 
   # List output files.
@@ -234,6 +245,10 @@ template("proto_library") {
       foreach(suffix, generator_plugin_suffixes) {
         protogens += [ "$cc_out_dir/${proto_path}${suffix}" ]
       }
+    }
+    if (descriptor_set_path_ != "") {
+      # Descriptor-only protobuf targets do not use |proto_path|
+      not_needed(["proto_path"])
     }
   }
 
@@ -314,10 +329,10 @@ template("proto_library") {
       ]
     }
 
-    if (generate_descriptor_set) {
+    if (descriptor_set_path_ != "") {
       args += [
         "--descriptor-set-out",
-        rel_descriptor_set_out_out,
+        rebase_path(descriptor_set_path_, root_build_dir),
       ]
     }
 
@@ -434,16 +449,22 @@ template("proto_library") {
       }
       deps += [ ":${action_name}" ]
 
-      # If using built-in cc generator, the resulting headers reference headers
-      # within protobuf_lite. Hence, dependencies require those headers too.
-      # If using generator plugin, extra deps should be resolved by the invoker.
       if (generate_cc) {
+        # If using built-in cc generator, the resulting headers reference
+        # headers within protobuf_lite. Hence, dependencies require those
+        # headers too. If using generator plugin, extra deps should be
+        # resolved by the invoker.
         if (defined(invoker.use_protobuf_full) &&
             invoker.use_protobuf_full == true) {
           public_deps = [ "//third_party/protobuf:protobuf_full" ]
         } else {
           public_deps = [ "//third_party/protobuf:protobuf_lite" ]
         }
+
+        # Allows generated protobufs to use #include subpaths rooted from
+        # |proto_out_dir|.
+        include_dirs = [ "${root_gen_dir}/" +
+                         rebase_path(proto_out_dir, "//") ]
       }
     }
   }
