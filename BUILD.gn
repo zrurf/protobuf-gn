@@ -35,20 +35,27 @@ config("protobuf_config") {
     "GOOGLE_PROTOBUF_NO_RTTI",
     "HAVE_PTHREAD",
   ]
+  cflags = []
+  if (is_clang) {
+    # Needed to support PROTOBUF_INTERNAL_CHECK_CLASS_SIZE in descriptor.h
+    cflags += [ "-Wno-c++98-compat-extra-semi" ]
+  }
 }
 config("protobuf_warnings") {
   cflags = []
 
   if (is_clang) {
-    # These are all needed as of https://github.com/protocolbuffers/protobuf/commit/66d7491.
+    # These are all needed as of https://github.com/protocolbuffers/protobuf/releases/tag/v3.20.1
     cflags += [
+      "-Wno-enum-enum-conversion",
       "-Wno-extra-semi",
       "-Wno-float-conversion",
       "-Wno-implicit-float-conversion",
       "-Wno-implicit-int-conversion",
-      "-Wno-implicit-int-float-conversion",
+      "-Wno-missing-field-initializers",
       "-Wno-shorten-64-to-32",
       "-Wno-sign-compare",
+      "-Wno-unused-function",
     ]
   }
 }
@@ -60,6 +67,11 @@ config("using_proto") {
     "src",
     "$root_gen_dir",
   ]
+  cflags = []
+  if (is_clang) {
+    # Needed to support PROTOBUF_INTERNAL_CHECK_CLASS_SIZE in descriptor.h
+    cflags += [ "-Wno-c++98-compat-extra-semi" ]
+  }
 }
 
 static_library("protobuf_lite") {
@@ -69,7 +81,6 @@ static_library("protobuf_lite") {
     "src/google/protobuf/arenastring.cc",
     "src/google/protobuf/extension_set.cc",
     "src/google/protobuf/generated_enum_util.cc",
-    "src/google/protobuf/generated_message_table_driven_lite.cc",
     "src/google/protobuf/generated_message_util.cc",
     "src/google/protobuf/implicit_weak_message.cc",
     "src/google/protobuf/inlined_string_field.cc",
@@ -106,26 +117,28 @@ static_library("protobuf_lite") {
     "src/google/protobuf/arena_impl.h",
     "src/google/protobuf/arena_test_util.h",
     "src/google/protobuf/arenastring.h",
+    "src/google/protobuf/arenaz_sampler.h",
     "src/google/protobuf/descriptor.h",
     "src/google/protobuf/descriptor.pb.h",
     "src/google/protobuf/descriptor_database.h",
     "src/google/protobuf/duration.pb.h",
     "src/google/protobuf/dynamic_message.h",
     "src/google/protobuf/empty.pb.h",
+    "src/google/protobuf/explicitly_constructed.h",
     "src/google/protobuf/extension_set.h",
     "src/google/protobuf/extension_set_inl.h",
     "src/google/protobuf/field_access_listener.h",
     "src/google/protobuf/field_mask.pb.h",
     "src/google/protobuf/generated_enum_reflection.h",
     "src/google/protobuf/generated_enum_util.h",
+    "src/google/protobuf/generated_message_bases.h",
     "src/google/protobuf/generated_message_reflection.h",
-    "src/google/protobuf/generated_message_table_driven.h",
-    "src/google/protobuf/generated_message_table_driven_lite.h",
     "src/google/protobuf/generated_message_tctable_decl.h",
     "src/google/protobuf/generated_message_tctable_impl.h",
     "src/google/protobuf/generated_message_util.h",
     "src/google/protobuf/has_bits.h",
     "src/google/protobuf/implicit_weak_message.h",
+    "src/google/protobuf/inlined_string_field.h",
     "src/google/protobuf/io/coded_stream.h",
     "src/google/protobuf/io/gzip_stream.h",
     "src/google/protobuf/io/io_win32.h",
@@ -156,9 +169,12 @@ static_library("protobuf_lite") {
     "src/google/protobuf/reflection.h",
     "src/google/protobuf/reflection_internal.h",
     "src/google/protobuf/reflection_ops.h",
+    "src/google/protobuf/reflection_tester.h",
     "src/google/protobuf/repeated_field.h",
+    "src/google/protobuf/repeated_ptr_field.h",
     "src/google/protobuf/service.h",
     "src/google/protobuf/source_context.pb.h",
+    "src/google/protobuf/string_member_robber.h",
     "src/google/protobuf/struct.pb.h",
     "src/google/protobuf/stubs/bytestream.h",
     "src/google/protobuf/stubs/callback.h",
@@ -219,7 +235,6 @@ static_library("protobuf_full") {
     "src/google/protobuf/field_mask.pb.cc",
     "src/google/protobuf/generated_message_bases.cc",
     "src/google/protobuf/generated_message_reflection.cc",
-    "src/google/protobuf/generated_message_table_driven.cc",
 
     # gzip_stream.cc pulls in zlib, but it's not actually used by protoc, just
     # by test code, so instead of compiling zlib for the host, let's just
@@ -273,26 +288,28 @@ static_library("protobuf_full") {
     "src/google/protobuf/arena_impl.h",
     "src/google/protobuf/arena_test_util.h",
     "src/google/protobuf/arenastring.h",
+    "src/google/protobuf/arenaz_sampler.h",
     "src/google/protobuf/descriptor.h",
     "src/google/protobuf/descriptor.pb.h",
     "src/google/protobuf/descriptor_database.h",
     "src/google/protobuf/duration.pb.h",
     "src/google/protobuf/dynamic_message.h",
     "src/google/protobuf/empty.pb.h",
+    "src/google/protobuf/explicitly_constructed.h",
     "src/google/protobuf/extension_set.h",
     "src/google/protobuf/extension_set_inl.h",
     "src/google/protobuf/field_access_listener.h",
     "src/google/protobuf/field_mask.pb.h",
     "src/google/protobuf/generated_enum_reflection.h",
     "src/google/protobuf/generated_enum_util.h",
+    "src/google/protobuf/generated_message_bases.h",
     "src/google/protobuf/generated_message_reflection.h",
-    "src/google/protobuf/generated_message_table_driven.h",
-    "src/google/protobuf/generated_message_table_driven_lite.h",
     "src/google/protobuf/generated_message_tctable_decl.h",
     "src/google/protobuf/generated_message_tctable_impl.h",
     "src/google/protobuf/generated_message_util.h",
     "src/google/protobuf/has_bits.h",
     "src/google/protobuf/implicit_weak_message.h",
+    "src/google/protobuf/inlined_string_field.h",
     "src/google/protobuf/io/coded_stream.h",
     "src/google/protobuf/io/gzip_stream.h",
     "src/google/protobuf/io/io_win32.h",
@@ -323,9 +340,12 @@ static_library("protobuf_full") {
     "src/google/protobuf/reflection.h",
     "src/google/protobuf/reflection_internal.h",
     "src/google/protobuf/reflection_ops.h",
+    "src/google/protobuf/reflection_tester.h",
     "src/google/protobuf/repeated_field.h",
+    "src/google/protobuf/repeated_ptr_field.h",
     "src/google/protobuf/service.h",
     "src/google/protobuf/source_context.pb.h",
+    "src/google/protobuf/string_member_robber.h",
     "src/google/protobuf/struct.pb.h",
     "src/google/protobuf/stubs/bytestream.h",
     "src/google/protobuf/stubs/callback.h",
@@ -484,6 +504,8 @@ if (current_toolchain == host_toolchain) {
       "src/google/protobuf/compiler/plugin.cc",
       "src/google/protobuf/compiler/plugin.pb.cc",
       "src/google/protobuf/compiler/python/python_generator.cc",
+      "src/google/protobuf/compiler/python/python_helpers.cc",
+      "src/google/protobuf/compiler/python/python_pyi_generator.cc",
       "src/google/protobuf/compiler/ruby/ruby_generator.cc",
       "src/google/protobuf/compiler/subprocess.cc",
       "src/google/protobuf/compiler/zip_writer.cc",
