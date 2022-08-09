@@ -64,6 +64,7 @@ config("protobuf_warnings") {
       "-Wno-missing-field-initializers",
       "-Wno-sign-compare",
       "-Wno-unused-function",
+      "-Wno-enum-constexpr-conversion",
     ]
   }
 }
