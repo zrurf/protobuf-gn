@@ -64,6 +64,8 @@ config("protobuf_warnings") {
       "-Wno-missing-field-initializers",
       "-Wno-sign-compare",
       "-Wno-unused-function",
+      # TODO(fxbug.dev/106177): Remove it when Clang is rolled to a revision that recognizes -Wenum-constexpr-conversion.
+      "-Wno-unknown-warning-option",
       "-Wno-enum-constexpr-conversion",
     ]
   }
