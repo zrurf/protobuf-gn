@@ -107,6 +107,12 @@
 #    ]
 #  }
 
+if (host_os == "win") {
+  _host_executable_suffix = ".exe"
+} else {
+  _host_executable_suffix = ""
+}
+
 template("proto_library") {
   assert(defined(invoker.sources), "Need sources for proto_library")
   proto_sources = invoker.sources
@@ -140,8 +146,9 @@ template("proto_library") {
     # also Windows executables have .exe at the end.
 
     plugin_host_label = invoker.generator_plugin_label + "($host_toolchain)"
-    plugin_path = get_label_info(plugin_host_label, "root_out_dir") + "/" +
-                  get_label_info(plugin_host_label, "name")
+    plugin_path =
+        get_label_info(plugin_host_label, "root_out_dir") + "/" +
+        get_label_info(plugin_host_label, "name") + _host_executable_suffix
     generate_with_plugin = true
   } else if (defined(invoker.generator_plugin_script)) {
     plugin_path = invoker.generator_plugin_script
@@ -270,7 +277,8 @@ template("proto_library") {
     args = protos
 
     protoc_label = "//third_party/protobuf:protoc($host_toolchain)"
-    protoc_path = get_label_info(protoc_label, "root_out_dir") + "/protoc"
+    protoc_path = get_label_info(protoc_label, "root_out_dir") + "/protoc" +
+                  _host_executable_suffix
 
     if (generate_go || generate_go_grpc) {
       if (generate_go_grpc) {
