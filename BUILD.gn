@@ -563,4 +563,10 @@ if (is_fuchsia_tree) {
   fuchsia_unittest_package("protobuf_tests") {
     deps = [ ":custom_options_test" ]
   }
+
+  group("tests") {
+    testonly = true
+
+    public_deps = [ ":protobuf_tests" ]
+  }
 }
