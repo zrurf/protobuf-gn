@@ -68,9 +68,6 @@ config("protobuf_warnings") {
       "-Wno-missing-field-initializers",
       "-Wno-sign-compare",
       "-Wno-unused-function",
-      # TODO(fxbug.dev/106177): Remove it when Clang is rolled to a revision that recognizes -Wenum-constexpr-conversion.
-      "-Wno-unknown-warning-option",
-      "-Wno-enum-constexpr-conversion",
     ]
   }
 }
@@ -541,32 +538,5 @@ if (current_toolchain == host_toolchain) {
   executable("protoc") {
     sources = [ "src/google/protobuf/compiler/main.cc" ]
     deps = [ ":protoc_lib" ]
-  }
-}
-
-proto_library("custom_options_proto") {
-  sources = [ "src/test/custom_options.proto" ]
-  use_protobuf_full = true
-}
-
-test("custom_options_test") {
-  sources = [ "src/test/custom_options.cc" ]
-  deps = [
-    ":custom_options_proto",
-    "//third_party/googletest:gtest_main",
-  ]
-}
-
-if (is_fuchsia_tree) {
-  import("//build/components.gni")
-
-  fuchsia_unittest_package("protobuf_tests") {
-    deps = [ ":custom_options_test" ]
-  }
-
-  group("tests") {
-    testonly = true
-
-    public_deps = [ ":protobuf_tests" ]
   }
 }

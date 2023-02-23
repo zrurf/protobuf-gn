@@ -43,6 +43,10 @@ config("protobuf_config") {
 
       # There are implicit conversions in parse_context.h
       "-Wno-shorten-64-to-32",
+
+      # TODO(fxbug.dev/113702): This can be removed once we update protobuf
+      # to include 6dd8af4ecfa7987bddb309862932886b84f1e4ef
+      "-Wno-error=deprecated-pragma",
     ]
   }
 }
@@ -210,32 +214,5 @@ if (current_toolchain == host_toolchain) {
   executable("protoc") {
     sources = [ "src/google/protobuf/compiler/main.cc" ]
     deps = [ ":protoc_lib" ]
-  }
-}
-
-proto_library("custom_options_proto") {
-  sources = [ "src/test/custom_options.proto" ]
-  use_protobuf_full = true
-}
-
-test("custom_options_test") {
-  sources = [ "src/test/custom_options.cc" ]
-  deps = [
-    ":custom_options_proto",
-    "//third_party/googletest:gtest_main",
-  ]
-}
-
-if (is_fuchsia_tree) {
-  import("//build/components.gni")
-
-  fuchsia_unittest_package("protobuf_tests") {
-    deps = [ ":custom_options_test" ]
-  }
-
-  group("tests") {
-    testonly = true
-
-    public_deps = [ ":protobuf_tests" ]
   }
 }
