@@ -1,4 +1,5 @@
 import subprocess
+import os
 
 gn_in = open("BUILD.input.gn", "rb")
 gn_file = gn_in.read()
@@ -11,7 +12,9 @@ def get_files(path, exclude=[]):
         cmd.append(":!%s" % ex)
     cmd.append(path)
     git_ls = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, cwd="../../../../third_party/protobuf")
+        cmd,
+        stdout=subprocess.PIPE,
+        cwd=os.path.join(os.environ["FUCHSIA_DIR"], "third_party", "protobuf"))
     sed1 = subprocess.Popen(
         ["sed", "s/^/\"/"], stdin=git_ls.stdout, stdout=subprocess.PIPE)
     return subprocess.check_output(["sed", "s/$/\",/"], stdin=sed1.stdout)

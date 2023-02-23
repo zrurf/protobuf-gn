@@ -43,27 +43,28 @@ config("protobuf_config") {
 
       # There are implicit conversions in parse_context.h
       "-Wno-shorten-64-to-32",
-
-      # TODO(fxbug.dev/113702): This can be removed once we update protobuf
-      # to include 6dd8af4ecfa7987bddb309862932886b84f1e4ef
-      "-Wno-error=deprecated-pragma",
     ]
   }
 }
+
 config("protobuf_warnings") {
   cflags = []
 
   if (is_clang) {
-    # These are all needed as of https://github.com/protocolbuffers/protobuf/releases/tag/v3.21.0
+    # These are all needed as of https://github.com/protocolbuffers/protobuf/releases/tag/v3.21.12
     cflags += [
-      "-Wno-enum-enum-conversion",
-      "-Wno-extra-semi",
-      "-Wno-float-conversion",
-      "-Wno-implicit-float-conversion",
-      "-Wno-implicit-int-conversion",
-      "-Wno-missing-field-initializers",
-      "-Wno-sign-compare",
-      "-Wno-unused-function",
+      "-Wno-error=deprecated-pragma",
+      "-Wno-error=enum-enum-conversion",
+      "-Wno-error=extra-semi",
+      "-Wno-error=float-conversion",
+      "-Wno-error=implicit-float-conversion",
+      "-Wno-error=implicit-int-conversion",
+      "-Wno-error=implicit-int-float-conversion",
+      "-Wno-error=invalid-noreturn",
+      "-Wno-error=missing-field-initializers",
+      "-Wno-error=sign-compare",
+      "-Wno-error=unused-function",
+      "-Wno-error=unused-private-field",
     ]
   }
 }
@@ -75,16 +76,6 @@ config("using_proto") {
     "src",
     "$root_gen_dir",
   ]
-  cflags = []
-  if (is_clang) {
-    cflags += [
-      # Needed to support PROTOBUF_INTERNAL_CHECK_CLASS_SIZE in descriptor.h
-      "-Wno-c++98-compat-extra-semi",
-
-      # There are implicit conversions in parse_context.h
-      "-Wno-shorten-64-to-32",
-    ]
-  }
 }
 
 static_library("protobuf_lite") {
@@ -92,8 +83,10 @@ static_library("protobuf_lite") {
     "src/google/protobuf/any_lite.cc",
     "src/google/protobuf/arena.cc",
     "src/google/protobuf/arenastring.cc",
+    "src/google/protobuf/arenaz_sampler.cc",
     "src/google/protobuf/extension_set.cc",
     "src/google/protobuf/generated_enum_util.cc",
+    "src/google/protobuf/generated_message_tctable_lite.cc",
     "src/google/protobuf/generated_message_util.cc",
     "src/google/protobuf/implicit_weak_message.cc",
     "src/google/protobuf/inlined_string_field.cc",
@@ -147,6 +140,7 @@ static_library("protobuf_full") {
     "src/google/protobuf/field_mask.pb.cc",
     "src/google/protobuf/generated_message_bases.cc",
     "src/google/protobuf/generated_message_reflection.cc",
+    "src/google/protobuf/generated_message_tctable_full.cc",
 
     # gzip_stream.cc pulls in zlib, but it's not actually used by protoc, just
     # by test code, so instead of compiling zlib for the host, let's just
@@ -181,7 +175,6 @@ static_library("protobuf_full") {
     "src/google/protobuf/util/internal/protostream_objectsource.cc",
     "src/google/protobuf/util/internal/protostream_objectwriter.cc",
     "src/google/protobuf/util/internal/type_info.cc",
-    "src/google/protobuf/util/internal/type_info_test_helper.cc",
     "src/google/protobuf/util/internal/utility.cc",
     "src/google/protobuf/util/json_util.cc",
     "src/google/protobuf/util/message_differencer.cc",
