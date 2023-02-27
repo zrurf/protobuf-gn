@@ -57,18 +57,18 @@ config("protobuf_warnings") {
   if (is_clang) {
     # These are all needed as of https://github.com/protocolbuffers/protobuf/releases/tag/v3.21.12
     cflags += [
-      "-Wno-error=deprecated-pragma",
-      "-Wno-error=enum-enum-conversion",
-      "-Wno-error=extra-semi",
-      "-Wno-error=float-conversion",
-      "-Wno-error=implicit-float-conversion",
-      "-Wno-error=implicit-int-conversion",
-      "-Wno-error=implicit-int-float-conversion",
-      "-Wno-error=invalid-noreturn",
-      "-Wno-error=missing-field-initializers",
-      "-Wno-error=sign-compare",
-      "-Wno-error=unused-function",
-      "-Wno-error=unused-private-field",
+      "-Wno-deprecated-pragma",
+      "-Wno-enum-enum-conversion",
+      "-Wno-extra-semi",
+      "-Wno-float-conversion",
+      "-Wno-implicit-float-conversion",
+      "-Wno-implicit-int-conversion",
+      "-Wno-implicit-int-float-conversion",
+      "-Wno-invalid-noreturn",
+      "-Wno-missing-field-initializers",
+      "-Wno-sign-compare",
+      "-Wno-unused-function",
+      "-Wno-unused-private-field",
     ]
   }
 }
